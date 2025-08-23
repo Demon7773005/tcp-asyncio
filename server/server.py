@@ -7,6 +7,7 @@ class TCPServer:
     def __init__(self):
         self.num_answer_server = 0  # Счётчик ответов сервера
         self.dict_client = {}  # Словарь клиентов {id: (reader, writer)}
+        self.client_id = 1 # Счетчик подключения клиентов
         self.keepalive_task = None  # Задача для отправки keepalive
 
     def write_file(self, listok):
@@ -32,14 +33,11 @@ class TCPServer:
                     print(f"Client {client_id} disconnected during keepalive")
                     del self.dict_client[client_id]
 
-    def get_key(self, val):
-        for key, value in self.dict_client.items():
-            if val == value[1].get_extra_info('peername'):
-                return key
 
     async def handle_client(self, reader, writer):
         addr = writer.get_extra_info('peername')
-        client_id = len(self.dict_client) + 1
+        client_id = self.client_id
+        self.client_id += 1
         self.dict_client[client_id] = (reader, writer)
         print(f"Подключился клиент {client_id}: {addr}")
 
@@ -74,6 +72,7 @@ class TCPServer:
                 self.write_file(list_log)
         except ConnectionError:
             print(f"Клиент {client_id} отключился неожиданно")
+
         finally:
             print(f"Отключение клиента {client_id}")
             if client_id in self.dict_client:
